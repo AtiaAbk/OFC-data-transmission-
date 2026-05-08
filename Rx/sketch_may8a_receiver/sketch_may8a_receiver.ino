@@ -3,13 +3,13 @@
 // LCD Pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
-// LDR Module DO pin
 int sensorPin = 7;
 
 int pulseCount = 0;
-bool previousState = HIGH;
 
-unsigned long lastPulseTime = 0;
+bool lastState = HIGH;
+
+unsigned long lastDetectTime = 0;
 
 void setup() {
 
@@ -28,20 +28,21 @@ void loop() {
 
   bool currentState = digitalRead(sensorPin);
 
-  // Detect pulse
-  if (previousState == HIGH && currentState == LOW) {
+  // Detect only one falling edge
+  if (lastState == HIGH && currentState == LOW) {
 
     pulseCount++;
 
-    lastPulseTime = millis();
+    lastDetectTime = millis();
 
-    delay(50);
+    // Wait so same pulse is not counted again
+    delay(300);
   }
 
-  previousState = currentState;
+  lastState = currentState;
 
-  // If transmission finished
-  if (pulseCount > 0 && millis() - lastPulseTime > 1500) {
+  // Transmission finished
+  if (pulseCount > 0 && millis() - lastDetectTime > 2000) {
 
     lcd.clear();
 
@@ -53,7 +54,6 @@ void loop() {
 
     delay(3000);
 
-    // Reset
     pulseCount = 0;
 
     lcd.clear();
