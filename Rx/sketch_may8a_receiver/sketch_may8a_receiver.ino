@@ -1,64 +1,101 @@
 #include <LiquidCrystal.h>
 
-// LCD Pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
-int sensorPin = 7;
+int ledPin = 8;
 
-int pulseCount = 0;
+unsigned long animTimer = 0;
+bool blinkState = false;
 
-bool lastState = HIGH;
+void startupScreen() {
 
-unsigned long lastDetectTime = 0;
+  lcd.clear();
+  lcd.setCursor(2, 0);
+  lcd.print("K.S.A OFC");
+
+  lcd.setCursor(4, 1);
+  lcd.print("SYSTEM");
+
+  delay(3000);
+  lcd.clear();
+}
+
+void loadingAnimation() {
+
+  static int i = 0;
+
+  lcd.setCursor(0, 1);
+
+  char anim[16];
+
+  for (int j = 0; j < 16; j++) {
+    anim[j] = (j <= i) ? '#' : ' ';
+  }
+
+  anim[15] = '\0';
+
+  lcd.print(anim);
+
+  i++;
+
+  if (i > 15) i = 0;
+}
 
 void setup() {
 
-  pinMode(sensorPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
 
   lcd.begin(16, 2);
 
-  lcd.setCursor(0, 0);
-  lcd.print("OFC RX Module");
-
-  lcd.setCursor(0, 1);
-  lcd.print("Waiting...");
+  startupScreen();
 }
 
 void loop() {
 
-  bool currentState = digitalRead(sensorPin);
+  lcd.setCursor(0, 0);
+  lcd.print("Enter Number:");
 
-  // Detect only one falling edge
-  if (lastState == HIGH && currentState == LOW) {
+  if (Serial.available() > 0) {
 
-    pulseCount++;
+    int number = Serial.parseInt();
 
-    lastDetectTime = millis();
+    if (number >= 1 && number <= 1000) {
 
-    // Wait so same pulse is not counted again
-    delay(300);
-  }
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Sending...");
+      
+      delay(500);
 
-  lastState = currentState;
+      // Send pulses + loading animation
+      for (int i = 0; i < number; i++) {
 
-  // Transmission finished
-  if (pulseCount > 0 && millis() - lastDetectTime > 2000) {
+        digitalWrite(ledPin, HIGH);
+        delay(100);
+        digitalWrite(ledPin, LOW);
+        delay(100);
 
-    lcd.clear();
+        loadingAnimation();
+      }
 
-    lcd.setCursor(0, 0);
-    lcd.print("Received:");
+      // Success message
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Transmitted");
+      lcd.setCursor(0, 1);
+      lcd.print("Successfully");
 
-    lcd.setCursor(0, 1);
-    lcd.print(pulseCount);
+      // Blink for 3 seconds 
+      for (int i = 0; i < 6; i++) {
 
-    delay(3000);
+        lcd.noDisplay();
+        delay(250);
+        lcd.display();
+        delay(250);
+      }
 
-    pulseCount = 0;
-
-    lcd.clear();
-
-    lcd.setCursor(0, 0);
-    lcd.print("Waiting...");
+      lcd.clear();
+    }
   }
 }
