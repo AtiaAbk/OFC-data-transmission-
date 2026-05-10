@@ -68,7 +68,7 @@ void loop() {
       
       delay(500);
 
-      // Send pulses + loading animation
+   
       for (int i = 0; i < number; i++) {
 
         digitalWrite(ledPin, HIGH);
@@ -79,7 +79,7 @@ void loop() {
         loadingAnimation();
       }
 
-      // Success message
+   
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Transmitted");
