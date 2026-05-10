@@ -86,7 +86,7 @@ void loop() {
       lcd.setCursor(0, 1);
       lcd.print("Successfully");
 
-      // Blink for 3 seconds 
+    
       for (int i = 0; i < 6; i++) {
 
         lcd.noDisplay();
