@@ -2,100 +2,63 @@
 
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
-int ledPin = 8;
+int sensorPin = 7;
 
-unsigned long animTimer = 0;
-bool blinkState = false;
+int count = 0;
+bool lastState = HIGH;
 
-void startupScreen() {
+unsigned long lastPulseTime = 0;
 
-  lcd.clear();
-  lcd.setCursor(2, 0);
-  lcd.print("K.S.A OFC");
-
-  lcd.setCursor(4, 1);
-  lcd.print("SYSTEM");
-
-  delay(3000);
-  lcd.clear();
-}
-
-void loadingAnimation() {
-
-  static int i = 0;
-
-  lcd.setCursor(0, 1);
-
-  char anim[16];
-
-  for (int j = 0; j < 16; j++) {
-    anim[j] = (j <= i) ? '#' : ' ';
-  }
-
-  anim[15] = '\0';
-
-  lcd.print(anim);
-
-  i++;
-
-  if (i > 15) i = 0;
-}
+bool locked = false;
 
 void setup() {
 
-  pinMode(ledPin, OUTPUT);
-  Serial.begin(9600);
+  pinMode(sensorPin, INPUT);
 
   lcd.begin(16, 2);
 
-  startupScreen();
+  lcd.setCursor(4, 0);
+  lcd.print("K.S.A");
+
+  lcd.setCursor(2, 1);
+  lcd.print("OFC SYSTEM");
+
+  delay(2000);
+  lcd.clear();
 }
 
 void loop() {
 
-  lcd.setCursor(0, 0);
-  lcd.print("Enter Number:");
+  bool state = digitalRead(sensorPin);
 
-  if (Serial.available() > 0) {
+  // ONLY ONE COUNT PER PULSE
+  if (!locked && lastState == HIGH && state == LOW) {
 
-    int number = Serial.parseInt();
+    count++;
+    locked = true;              // lock same pulse
+    lastPulseTime = millis();
+  }
 
-    if (number >= 1 && number <= 1000) {
+  // unlock after pulse ends
+  if (state == HIGH) {
+    locked = false;
+  }
 
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("Sending...");
-      
-      delay(500);
+  lastState = state;
 
-   
-      for (int i = 0; i < number; i++) {
+  // transmission end detect
+  if (count > 0 && millis() - lastPulseTime > 2000) {
 
-        digitalWrite(ledPin, HIGH);
-        delay(100);
-        digitalWrite(ledPin, LOW);
-        delay(100);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Received:");
 
-        loadingAnimation();
-      }
+    lcd.setCursor(0, 1);
+    lcd.print(count);
 
-   
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("Transmitted");
-      lcd.setCursor(0, 1);
-      lcd.print("Successfully");
+    delay(3000);
 
-    
-      for (int i = 0; i < 6; i++) {
-
-        lcd.noDisplay();
-        delay(250);
-        lcd.display();
-        delay(250);
-      }
-
-      lcd.clear();
-    }
+    count = 0;
+    lcd.clear();
   }
 }
