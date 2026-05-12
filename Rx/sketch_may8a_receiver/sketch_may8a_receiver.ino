@@ -31,7 +31,7 @@ void loop() {
 
   bool state = digitalRead(sensorPin);
 
-  // ONLY ONE COUNT PER PULSE
+
   if (!locked && lastState == HIGH && state == LOW) {
 
     count++;
